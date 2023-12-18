@@ -1,0 +1,40 @@
+- name: Software
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Soft
+      apt: name={{item}} state=latest update_cache=true
+      loop: [curl, lynx, vim, mc, firewalld, git]
+    - name: GitClone
+      git:
+        repo: https://github.com/andgabs/skill_hmao
+        dest: /root/dep
+        clone: yes
+        update: yes
+    - name: Enable Firewall
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+    - name: Firewall
+      firewalld:
+        port: "{{item}}"
+        permanent: yes
+        state: enabled
+      loop:
+      - 80/tcp
+      - 8080/tcp
+      - 1022/tcp
+    - name: SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{item.regexp}}"
+        line: "{{item.line}}"
+        state: present
+      loop:
+        - {regexp: '^#?#Port.*', line: 'Port 1022'}
+        - {regexp: '^#?#PubkeyAuthentication.*', line: 'PubkeyAuthentication yes'}
+    - name: Res Firewall
+      service:
+        name: firewalld
+        state: restarted
